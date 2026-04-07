@@ -1,0 +1,19 @@
+[project]
+name = "minyoung"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "hd-bet>=2.0.1",
+    "matplotlib>=3.9",
+    "monai>=1.4.0",
+    "nibabel>=5.4.0",
+    "pandas-plink>=2.3.2",
+    "scikit-image>=0.26.0",
+    "scikit-learn>=1.4",
+    "scipy>=1.17.1",
+    "torch>=2.10.0",
+    "torchvision>=0.25.0",
+    "transformers>=4.40.0",
+]

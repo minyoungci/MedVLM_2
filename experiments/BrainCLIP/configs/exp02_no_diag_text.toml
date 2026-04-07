@@ -1,0 +1,39 @@
+exp_name = "exp02_no_diag_text"
+
+# EXP 02: diagnosis-free text ablation
+#
+# 목적: linear probe 결과가 "MRI 독립 표현 학습" 품질을 반영하도록
+#        텍스트에서 진단 레이블("Clinical diagnosis: ...") 제거.
+#
+# 비교 대상: EXP 01 (diagnosis 포함) vs EXP 02 (diagnosis 제외)
+#   - Retrieval R@K:   EXP 02 < EXP 01 이 예상됨 (diagnosis가 강한 alignment 신호이므로)
+#   - Linear probe:    EXP 02 결과가 "MRI 자체의 진단 정보"를 측정하는 진짜 지표
+#
+# 텍스트 생성 명령 (사전 실행 필요, Min 승인 필요):
+#   UV_CACHE_DIR=/home/vlm/minyoung/.uv_cache uv run python \
+#       experiments/BrainCLIP/scripts/build_clinical_text.py \
+#       --output experiments/BrainCLIP/data/clinical_texts_no_diag.csv \
+#       --no_diagnosis --preview 5
+
+[data]
+texts_csv           = "experiments/BrainCLIP/data/clinical_texts_no_diag.csv"
+# embedding_cache_dir = "experiments/BrainCLIP/data/mri_embeddings"
+
+[model]
+mri_freeze_backbone   = true
+mri_fine_tune_layers  = 0
+text_fine_tune_layers = 2
+proj_dim              = 128
+temperature           = 0.07
+
+[train]
+epochs         = 30
+batch_size     = 64             # B200 단일 GPU, in-batch negatives = 63
+lr             = 3e-4
+weight_decay   = 0.01
+warmup_ratio   = 0.05
+clip_grad_norm = 1.0
+num_workers    = 4
+log_every      = 20
+ckpt_dir       = "experiments/BrainCLIP/results/exp02_no_diag_text/checkpoints"
+log_dir        = "experiments/BrainCLIP/results/exp02_no_diag_text/logs"

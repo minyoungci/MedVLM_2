@@ -1,0 +1,49 @@
+ReproSeg V1: Reproducibility-Equivariant Dual-Stream Brain Segmentation Architecture.
+Total parameters: 75.7M (new components: 13.5M = 18%).
+
+The architecture processes a T1-weighted brain MRI volume of shape [B, 1, 192x224x192].
+
+STEP 1 - SHARED STEM:
+The input passes through SwinViT Patch Embedding and Stage 0, producing features of shape [B, 48, 96x112x96]. This is where the architecture forks into two parallel streams.
+
+STEP 2 - DUAL STREAMS (running in parallel):
+
+LEFT: ANATOMY STREAM (blue, 62.2M params, BrainSegFounder pretrained):
+- Stage 0: 48 channels, spatial 96x112x96
+- Stage 1: 96 channels, spatial 48x56x48
+- Stage 2: 192 channels, spatial 24x28x24
+- Stage 3: 384 channels, spatial 12x14x12
+- Bottleneck: 768 channels, spatial 6x7x6
+This stream captures anatomical structure, boundaries, and topology.
+
+RIGHT: INVARIANCE STREAM (orange, 5.6M params, random init, half-channel design):
+- Stage 0: 24 channels, spatial 96x112x96
+- Stage 1: 48 channels, spatial 48x56x48
+- Stage 2: 96 channels, spatial 24x28x24
+- Stage 3: 192 channels, spatial 12x14x12
+This stream captures scanner-specific bias and acquisition noise.
+The Stage 3 output feeds into a Gradient Reversal Layer (GRL) followed by a Site Classifier that predicts acquisition site (4 classes: NACC, OASIS, ADNI, AJU). The GRL reverses gradients so the anatomy stream learns to be site-invariant.
+
+STEP 3 - CROSS-STREAM GATING (CSG):
+At each of the 4 scale levels, a Cross-Stream Gating module connects the two streams.
+The CSG operation is: A_pure = A - sigma(gate) * proj(I)
+where gate = sigmoid(Conv1x1([A; proj(I)])), and proj is a 1x1 convolution projecting invariance features to match anatomy channel dimensions.
+This structurally subtracts scanner effects from anatomy features. The gate learns how much invariance information to remove at each spatial location.
+
+STEP 4 - SEGMENTATION DECODER (green):
+The purified anatomy features (A_pure) are fed as skip connections into the SwinUNETR decoder.
+The decoder progressively upsamples from bottleneck back to full resolution.
+Output: segmentation logits [B, 12, 192x224x192] for 12 brain tissue classes.
+
+STEP 5 - AUXILIARY OUTPUTS:
+- Volume Head (purple, 1.2M params): LR-aware pooling from bottleneck, predicts volumes of 7 dementia-relevant structures (hippocampus L/R, amygdala L/R, entorhinal L/R, ventricle). Output: [B, 7].
+- Multi-Scale Feature Consistency (yellow, 5.9M params): For paired scans of the same subject, computes cosine similarity of A_pure features at all 4 encoder scales. This enforces reproducibility at the feature level, not just the output level.
+
+STEP 6 - LOSS FUNCTION:
+Four loss terms combined via uncertainty weighting (Kendall et al., CVPR 2018):
+L = (1/2*sigma1^2)*L_seg + (1/2*sigma2^2)*L_repro + (1/2*sigma3^2)*L_inv + (1/2*sigma4^2)*L_vol + log(sigma1*sigma2*sigma3*sigma4)
+where sigma1-4 are learned parameters. No manual lambda tuning required.
+- L_seg: Dice + Cross-Entropy (standard segmentation)
+- L_repro: TCL (temporal volume consistency) + multi-scale feature consistency
+- L_inv: adversarial site classification via GRL
+- L_vol: volume regression (MSE on log1p scale) + seg-volume consistency

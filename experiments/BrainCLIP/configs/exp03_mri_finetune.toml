@@ -1,0 +1,41 @@
+exp_name = "exp03_mri_finetune"
+
+# EXP 03: BrainIAC 마지막 2 블록 unfreeze
+#
+# 진단: EXP01/02 모두 val_loss 4.53에서 plateau, R@1 random-level
+# 원인: frozen BrainIAC embedding은 임상 텍스트(CDR/GDS/진단) 정보를 담지 않음
+#       projection head 2-layer만으로는 없는 정보를 생성 불가
+#
+# 변경:
+#   - mri_fine_tune_layers=0 → 2 (BrainIAC 마지막 2 블록 gradient 허용)
+#   - embedding_cache_dir 제거 (fine_tune_layers > 0이면 cache 사용 불가)
+#   - mri_lr = 1e-5 (catastrophic forgetting 방지, text/proj lr=3e-4와 분리)
+#   - warmup_ratio = 0.10 (pretrained weight 보호를 위해 warmup 2× 연장)
+#
+# 기대:
+#   - val_loss < 4.16 (= log(64), random NT-Xent baseline) → alignment 학습 확인
+#   - R@1 > 0.05 → EXP01 best 0.045 초과 시 의미있는 개선
+
+[data]
+texts_csv = "experiments/BrainCLIP/data/clinical_texts.csv"
+# embedding_cache_dir 사용 불가 — fine_tune_layers > 0이면 raw NIfTI 로드 필수
+
+[model]
+mri_freeze_backbone   = true
+mri_fine_tune_layers  = 2          # BrainIAC block[10], block[11] gradient 허용
+text_fine_tune_layers = 2
+proj_dim              = 128
+temperature           = 0.07
+
+[train]
+epochs         = 30
+batch_size     = 32               # raw 192×224×192 로드 — B200 183GB 충분
+lr             = 3e-4             # text encoder + projection head LR
+mri_lr         = 1e-5             # MRI fine-tune blocks LR (30× 낮음)
+weight_decay   = 0.01
+warmup_ratio   = 0.10             # EXP01의 2× — pretrained weight 보호
+clip_grad_norm = 1.0
+num_workers    = 8                # raw NIfTI IO 병렬화
+log_every      = 5                # raw MRI epoch당 스텝 수 적음 (~33 steps)
+ckpt_dir       = "experiments/BrainCLIP/results/exp03_mri_finetune/checkpoints"
+log_dir        = "experiments/BrainCLIP/results/exp03_mri_finetune/logs"

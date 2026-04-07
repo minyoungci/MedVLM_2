@@ -1,0 +1,42 @@
+[
+  {
+    "id": "note-001",
+    "workspace": "minyoung2",
+    "category": "project",
+    "doc_type": "research-note",
+    "path": "experiments/ReproSeg/research_notes/001_reproseg_v1_ablation_plan.md",
+    "title": "ReproSeg V1 실험 계획 및 각 Ablation 상세 기록",
+    "keywords": [
+      "ReproSeg", "ablation", "dual-stream", "CSG", "GRL",
+      "TCL", "feature_consistency", "volume_head", "UWL",
+      "parameter_efficiency", "LoRA", "feature_reuse",
+      "SwinUNETR", "BrainSegFounder", "gradient_flow",
+      "DDP", "scanner_invariance", "reproducibility"
+    ],
+    "summary": "ReproSeg V1 ablation A-F 전체 실험 계획. 각 실험의 아키텍처, 파라미터 수, gradient 흐름, 소요시간, 현재 결과 상세 기록. Phase 2 V2 방향 (Feature Reuse, LoRA, Hypernetwork CSG) 포함.",
+    "created": "2026-04-02",
+    "status": "진행 중",
+    "current_results": {
+      "A_baseline": {"best_dice": 0.9178, "status": "완료"},
+      "B_tcl": {"dice_ep4": 0.9091, "status": "진행 중"},
+      "C_dualstream": {"dice_ep5": 0.9066, "status": "진행 중"},
+      "D_volume": {"dice_ep4": 0.9077, "status": "진행 중"}
+    }
+  },
+  {
+    "id": "note-002",
+    "workspace": "minyoung2",
+    "category": "data",
+    "doc_type": "research-note",
+    "path": "docs/research_note/BrainCLIP/001_longitudinal_manifest_adni_clinical.md",
+    "title": "BrainCLIP Longitudinal Manifest — ADNI 임상 데이터 커버리지 개선",
+    "keywords": [
+      "BrainCLIP", "longitudinal", "manifest", "ADNI", "CDR", "CDRSB",
+      "clinical_matching", "age_coverage", "v4_longitudinal_manifest",
+      "All_Subjects_CDR_02Nov2025", "Study_Entry", "window_matching"
+    ],
+    "summary": "BrainCLIP longitudinal manifest에서 ADNI 임상 데이터 커버리지를 74%→100% (age), 15%→90.6% (CDR)로 개선. CDR 파일 ±90일 window 매칭 + Study Entry baseline age 조합 전략. 총 세션 2,594→5,902.",
+    "created": "2026-04-07",
+    "status": "완료"
+  }
+]

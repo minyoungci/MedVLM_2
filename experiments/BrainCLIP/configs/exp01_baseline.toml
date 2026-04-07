@@ -1,0 +1,25 @@
+exp_name = "exp01_baseline"
+
+[data]
+texts_csv           = "experiments/BrainCLIP/data/clinical_texts.csv"
+# embedding_cache_dir — BrainIAC 사전 추출 .npy 디렉토리 (없으면 raw NIfTI 로드)
+# embedding_cache_dir = "experiments/BrainCLIP/data/mri_embeddings"
+
+[model]
+mri_freeze_backbone  = true
+mri_fine_tune_layers = 0        # BrainIAC 완전 freeze (embedding 캐시 사용 시 필수)
+text_fine_tune_layers = 2       # PubMedBERT 마지막 2 레이어 fine-tune
+proj_dim             = 128
+temperature          = 0.07
+
+[train]
+epochs         = 30
+batch_size     = 64             # B200 단일 GPU, in-batch negatives = 63
+lr             = 3e-4
+weight_decay   = 0.01
+warmup_ratio   = 0.05           # 전체 step의 5% warmup
+clip_grad_norm = 1.0
+num_workers    = 4
+log_every      = 20
+ckpt_dir       = "experiments/BrainCLIP/results/exp01_baseline/checkpoints"
+log_dir        = "experiments/BrainCLIP/results/exp01_baseline/logs"

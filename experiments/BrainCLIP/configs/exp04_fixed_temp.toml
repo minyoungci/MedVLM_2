@@ -1,0 +1,40 @@
+exp_name = "exp04_fixed_temp"
+
+# EXP 04: Fixed temperature τ=0.02
+#
+# 가설: EXP01/02/03 모두 τ=0.070→0.071로 고착 → positive/negative similarity가
+#       구분되지 않아 contrastive learning이 작동 못 함.
+#       τ를 0.02로 낮추고 고정하면 logit scale이 3.5× 상승 →
+#       같은 데이터, 같은 모델에서 alignment 학습이 가능해지는지 검증.
+#
+# EXP01과 동일한 설정 (frozen backbone, embedding cache, diagnosis 포함)
+# 변경점: temperature=0.02, learnable_temperature=false
+#
+# 기대:
+#   - val_loss < 4.16 (random baseline)이 빠르게 달성되면 temperature가 병목이었음
+#   - R@1 > 0.05 목표 (EXP01 best 0.045 초과)
+#   - τ 고정이라 temperature 컬럼은 항상 0.02로 일정
+
+[data]
+texts_csv           = "experiments/BrainCLIP/data/clinical_texts.csv"
+embedding_cache_dir = "experiments/BrainCLIP/data/mri_embeddings"
+
+[model]
+mri_freeze_backbone   = true
+mri_fine_tune_layers  = 0
+text_fine_tune_layers = 2
+proj_dim              = 128
+temperature           = 0.02
+learnable_temperature = false   # ← 핵심 변경: temperature 고정
+
+[train]
+epochs         = 30
+batch_size     = 64
+lr             = 3e-4
+weight_decay   = 0.01
+warmup_ratio   = 0.05
+clip_grad_norm = 1.0
+num_workers    = 4
+log_every      = 20
+ckpt_dir       = "experiments/BrainCLIP/results/exp04_fixed_temp/checkpoints"
+log_dir        = "experiments/BrainCLIP/results/exp04_fixed_temp/logs"
